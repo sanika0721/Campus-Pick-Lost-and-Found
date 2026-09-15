@@ -195,7 +195,7 @@ async function seed() {
     },
     {
       userId: maya.id,
-      title: "Campus Pick is ready",
+      title: "TROVIO is ready",
       message: "Keep your identifying details private until verification.",
       type: "welcome",
       href: "/profile",

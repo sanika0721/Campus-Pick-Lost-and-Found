@@ -35,8 +35,10 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 app.use(cors({ credentials: true, origin: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Report photos are sent as compressed data URLs from the browser. Keep the
+// limit bounded, but large enough for a normal phone photo after compression.
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use(
   clerkMiddleware((req) => ({
     publishableKey: publishableKeyFromHost(
