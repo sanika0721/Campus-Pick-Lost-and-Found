@@ -1,0 +1,1 @@
+- [Managed Clerk auth](clerk-auth-flow.md) — keep browser sign-in and sign-up on Clerk components, not local placeholder forms.

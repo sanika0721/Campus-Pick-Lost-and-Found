@@ -1,5 +1,8 @@
 import { type ButtonHTMLAttributes, type ChangeEvent, type FormEvent, type ReactNode, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ClerkProvider, SignIn, SignUp } from '@clerk/react';
+import { publishableKeyFromHost } from '@clerk/react/internal';
+import { shadcn } from '@clerk/themes';
 import {
   ArrowRight, BadgeCheck, Bell, Building2, Check, ChevronDown, ClipboardCheck, Clock3,
   FileText, Heart, ImagePlus, Inbox, Info, LayoutDashboard, ListFilter, LockKeyhole,
@@ -22,6 +25,56 @@ import NotFound from '@/pages/not-found';
 import { Link, Redirect, Route, Switch, Router as WouterRouter, useLocation, useRoute } from 'wouter';
 
 const queryClient = new QueryClient();
+const clerkPubKey = publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+function stripBase(path: string) {
+  return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || '/' : path;
+}
+
+const clerkAppearance = {
+  theme: shadcn,
+  cssLayerName: 'clerk',
+  options: {
+    logoPlacement: 'inside' as const,
+    logoLinkUrl: basePath || '/',
+    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+    socialButtonsPlacement: 'top' as const,
+    socialButtonsVariant: 'blockButton' as const,
+  },
+  variables: {
+    colorPrimary: 'hsl(165 42% 32%)',
+    colorForeground: 'hsl(198 35% 18%)',
+    colorMutedForeground: 'hsl(198 15% 47%)',
+    colorDanger: 'hsl(4 67% 49%)',
+    colorBackground: 'hsl(42 40% 99%)',
+    colorInput: 'hsl(42 33% 96%)',
+    colorInputForeground: 'hsl(198 35% 18%)',
+    colorNeutral: 'hsl(39 22% 86%)',
+    fontFamily: 'DM Sans, sans-serif',
+    borderRadius: '0.75rem',
+  },
+  elements: {
+    rootBox: 'w-full flex justify-center',
+    cardBox: 'bg-[#fffdfa] rounded-3xl w-[440px] max-w-full overflow-hidden shadow-2xl',
+    card: '!shadow-none !border-0 !bg-transparent !rounded-none',
+    footer: '!shadow-none !border-0 !bg-transparent !rounded-none',
+    headerTitle: 'text-ink font-display',
+    headerSubtitle: 'text-ink-muted',
+    socialButtonsBlockButtonText: 'text-ink font-bold',
+    formFieldLabel: 'text-ink font-bold',
+    footerActionLink: 'text-teal font-bold',
+    footerActionText: 'text-ink-muted',
+    dividerText: 'text-ink-muted',
+    formButtonPrimary: 'bg-teal hover:bg-teal/90 text-sand',
+    formFieldInput: 'border-line bg-sand text-ink',
+    socialButtonsBlockButton: 'border-line bg-card',
+    alertText: 'text-red-800',
+    formFieldSuccessText: 'text-teal',
+    main: 'bg-transparent',
+  },
+};
 
 const navSections = [
   { label: 'Workspace', links: [
@@ -243,8 +296,9 @@ function ProfilePage() {
   return <><PageHeader eyebrow="Account" title="Your profile" body="Keep your campus identity and notification preferences up to date." action={<Button variant="outline" onClick={() => alert('Profile editing will be available through your secure account settings.')} data-testid="button-edit-profile"><PencilLine size={16} /> Edit profile</Button>} /><div className="grid gap-6 lg:grid-cols-[.7fr_1.3fr]"><section className="rounded-2xl bg-ink p-7 text-sand"><span className="grid h-16 w-16 place-items-center rounded-full bg-lumen font-mono text-xl font-bold text-ink">JL</span><h2 className="mt-5 font-display text-2xl font-bold">Jordan Lee</h2><p className="mt-1 text-sm text-sand/60">Student · Class of 2026</p><div className="mt-8 border-t border-white/10 pt-5 text-sm"><p className="text-sand/50">Campus email</p><p className="mt-1 font-bold">jordan.lee@campus.edu</p></div></section><section className="rounded-2xl border border-line bg-card p-6"><h2 className="font-display text-xl font-bold">Account details</h2><div className="mt-6 grid gap-5 sm:grid-cols-2"><Field label="First name" name="firstName" value="Jordan" /><Field label="Last name" name="lastName" value="Lee" /><Field label="Campus email" name="email" type="email" value="jordan.lee@campus.edu" /><Field label="Preferred location" name="preferredLocation" value="North campus" /></div><div className="mt-8 border-t border-line pt-6"><h3 className="font-bold">Privacy and notifications</h3><label className="mt-4 flex items-center justify-between gap-4 rounded-xl bg-mist p-4 text-sm"><span><span className="block font-bold">Match alerts</span><span className="mt-1 block text-xs text-ink-muted">Notify me when reports look connected.</span></span><input type="checkbox" defaultChecked className="h-5 w-5 accent-teal" data-testid="checkbox-match-alerts" /></label><label className="mt-3 flex items-center justify-between gap-4 rounded-xl bg-mist p-4 text-sm"><span><span className="block font-bold">Handover updates</span><span className="mt-1 block text-xs text-ink-muted">Keep me posted about claim progress.</span></span><input type="checkbox" defaultChecked className="h-5 w-5 accent-teal" data-testid="checkbox-handover-updates" /></label></div></section></div></>;
 }
 
-function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
-  return <div className="min-h-[100dvh] bg-ink px-5 py-8 text-sand"><div className="mx-auto max-w-5xl"><Logo inverse /><div className="grid min-h-[calc(100dvh-120px)] items-center gap-12 py-14 md:grid-cols-2"><div className="hidden md:block"><p className="font-mono text-xs uppercase tracking-[.18em] text-lumen">A trusted campus utility</p><h1 className="mt-5 max-w-md font-display text-5xl font-bold leading-tight">Recovery starts with a little context.</h1><p className="mt-5 max-w-sm leading-7 text-sand/60">Your account keeps your reports, matches, and conversations together — private and ready when you need them.</p></div><div className="rounded-3xl bg-sand p-6 text-ink shadow-2xl md:p-9"><p className="font-mono text-[10px] uppercase tracking-[.16em] text-coral">{mode === 'sign-in' ? 'Welcome back' : 'Join the recovery desk'}</p><h2 className="mt-3 font-display text-3xl font-bold">{mode === 'sign-in' ? 'Sign in to Campus Pick' : 'Create your account'}</h2><p className="mt-2 text-sm text-ink-muted">{mode === 'sign-in' ? 'Continue where you left off.' : 'Use your campus email to get started.'}</p><form className="mt-7 space-y-4" onSubmit={(e) => e.preventDefault()}><Field label="Campus email" name="authEmail" type="email" placeholder="you@campus.edu" required /><Field label="Password" name="authPassword" type="password" placeholder="At least 8 characters" required /><Button className="w-full" type="submit" data-testid={`button-${mode}`}>{mode === 'sign-in' ? 'Continue securely' : 'Create account'} <ArrowRight size={16} /></Button></form><div className="my-6 flex items-center gap-3 text-xs text-ink-muted"><span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" /></div><Button variant="outline" className="w-full" onClick={() => alert('Campus single sign-on will open here.')} data-testid="button-campus-sso"><Building2 size={16} /> Continue with campus SSO</Button><p className="mt-6 text-center text-sm text-ink-muted">{mode === 'sign-in' ? 'New to Campus Pick?' : 'Already have an account?'} <Link href={mode === 'sign-in' ? '/sign-up' : '/sign-in'} className="font-bold text-teal hover:underline" data-testid="link-auth-switch">{mode === 'sign-in' ? 'Create an account' : 'Sign in'}</Link></p><p className="mt-6 flex items-center justify-center gap-2 text-center text-[11px] text-ink-muted"><LockKeyhole size={12} /> Secure session · Your details stay private</p></div></div></div></div>;
+function ClerkAuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
+  const Component = mode === 'sign-in' ? SignIn : SignUp;
+  return <div className="flex min-h-[100dvh] items-center justify-center bg-ink px-4 py-8"><div className="w-full max-w-[440px]"><div className="mb-5 flex justify-center"><Logo inverse /></div><Component routing="path" path={`${basePath}/${mode}`} signInUrl={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></div></div>;
 }
 
 function ItemDetailPage() {
@@ -261,8 +315,8 @@ function ItemDetailPage() {
 function Router() {
   return <ErrorBoundary resetKey={window.location.pathname}><Switch>
     <Route path="/" component={PublicHome} />
-    <Route path="/sign-in/*?" component={() => <AuthPage mode="sign-in" />} />
-    <Route path="/sign-up/*?" component={() => <AuthPage mode="sign-up" />} />
+    <Route path="/sign-in/*?" component={() => <ClerkAuthPage mode="sign-in" />} />
+    <Route path="/sign-up/*?" component={() => <ClerkAuthPage mode="sign-up" />} />
      <Route path="/how-it-works"><HowItWorksPage /></Route>
     <Route path="/find/:id" component={ItemDetailPage} />
     <Route path="/dashboard"><AppShell><DashboardPage /></AppShell></Route>
@@ -281,7 +335,8 @@ function Router() {
 }
 
 function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
+  if (!clerkPubKey) throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY for Campus Pick authentication.');
+  return <WouterRouter base={basePath}><ClerkProvider publishableKey={clerkPubKey} proxyUrl={clerkProxyUrl} appearance={clerkAppearance} signInUrl={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} routerPush={(to) => { window.history.pushState({}, '', stripBase(to)); window.dispatchEvent(new PopStateEvent('popstate')); }} routerReplace={(to) => { window.history.replaceState({}, '', stripBase(to)); window.dispatchEvent(new PopStateEvent('popstate')); }}><QueryClientProvider client={queryClient}><TooltipProvider><Router /><Toaster /></TooltipProvider></QueryClientProvider></ClerkProvider></WouterRouter>;
 }
 
 export default App;
