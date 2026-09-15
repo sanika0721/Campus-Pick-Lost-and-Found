@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Campus Pick"
+description = "A university lost and found platform where students and staff can report items, discover potential matches, submit secure claims, and coordinate verified handovers."
+version = "1.0.0"
+id = "artifacts/campus-pick"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23524
+
+[services.development]
+run = "pnpm --filter @workspace/campus-pick run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/campus-pick", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/campus-pick/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23524"
+BASE_PATH = "/"

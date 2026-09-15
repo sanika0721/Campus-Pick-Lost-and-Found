@@ -1,0 +1,15 @@
+Enhance the existing **Campus Pick** app to maximize its score in the following judging criteria:
+
+**Innovation & Uniqueness – 20 marks:** Add standout features such as smart rule-based matching with explainable match scores, duplicate detection, privacy-controlled ownership verification, secure handover verification code/QR, trust badges, and a complete Lost → Matched → Verified → Returned lifecycle.
+
+**Functionality & Working Demo – 25 marks:** Ensure every major feature actually works with the database: login, role-based dashboards, report lost/found, image upload, search/filter, matching, notifications, claims, verification, messaging, saved items, and handover. Add realistic demo data and make the complete workflow easy to demonstrate.
+
+**Technical Implementation – 20 marks:** Use a proper database, role-based access control, validation, reusable components, secure data handling, modular architecture, and a working rule-based matching algorithm without requiring paid APIs.
+
+**UI/UX & Design – 15 marks:** Improve the app with a polished, modern, responsive campus-tech interface, intuitive navigation, clear dashboards, status badges, timelines, loading/empty/error states, accessibility, and consistent design.
+
+**Presentation & Communication – 10 marks:** Add an attractive landing page, clear “How It Works” section, problem/solution explanation, impact statistics, feature highlights, and a simple demo-friendly workflow.
+
+**Q&A / Technical Understanding – 10 marks:** Make the architecture and major features easy to explain during judging. Include an in-app **“How Campus Pick Works”** section showing the matching logic, security, verification process, database workflow, and future AI scalability.
+
+**Important:** Do not add unnecessary paid services or require an upgrade. Prioritize features that are visibly demonstrable during a hackathon/college evaluation and make the existing app feel like a complete, innovative, technically strong real-world solution.

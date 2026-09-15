@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Campus Pick lost and found API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: campus-pick
+    description: Campus Pick operations
 paths:
   /healthz:
     get:
@@ -24,7 +26,288 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [campus-pick]
+      summary: Get the current user's dashboard
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /items:
+    get:
+      operationId: listItems
+      tags: [campus-pick]
+      summary: Search and filter campus reports
+      parameters:
+        - name: type
+          in: query
+          schema: { type: string, enum: [all, lost, found] }
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: location
+          in: query
+          schema: { type: string }
+        - name: color
+          in: query
+          schema: { type: string }
+        - name: brand
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [newest, relevance] }
+      responses:
+        "200":
+          description: Matching item reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemList"
+    post:
+      operationId: createItem
+      tags: [campus-pick]
+      summary: Create a lost or found report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemInput"
+      responses:
+        "201":
+          description: Created report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+  /items/{id}:
+    get:
+      operationId: getItem
+      tags: [campus-pick]
+      summary: Get a report with its match context
+      parameters:
+        - $ref: "#/components/parameters/ItemId"
+      responses:
+        "200":
+          description: Report detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemDetail"
+        "404": { $ref: "#/components/responses/NotFound" }
+  /items/{id}/save:
+    post:
+      operationId: toggleSavedItem
+      tags: [campus-pick]
+      summary: Save or unsave a report for the current user
+      parameters:
+        - $ref: "#/components/parameters/ItemId"
+      responses:
+        "200":
+          description: Updated save state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaveState"
+  /matches:
+    get:
+      operationId: listMatches
+      tags: [campus-pick]
+      summary: Get potential matches for the current user
+      responses:
+        "200":
+          description: Potential matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Match" }
+  /claims:
+    get:
+      operationId: listClaims
+      tags: [campus-pick]
+      summary: Get claims relevant to the current user
+      responses:
+        "200":
+          description: Claims
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Claim" }
+    post:
+      operationId: createClaim
+      tags: [campus-pick]
+      summary: Submit a private ownership verification request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimInput"
+      responses:
+        "201":
+          description: Claim submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Claim"
+  /claims/{id}:
+    patch:
+      operationId: updateClaim
+      tags: [campus-pick]
+      summary: Review a claim
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimUpdate"
+      responses:
+        "200":
+          description: Updated claim
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Claim"
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [campus-pick]
+      summary: Get in-app notifications
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Notification" }
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [campus-pick]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+  /messages:
+    get:
+      operationId: listMessages
+      tags: [campus-pick]
+      summary: Get secure messages
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Message" }
+    post:
+      operationId: sendMessage
+      tags: [campus-pick]
+      summary: Send an in-app message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Sent message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /security/queue:
+    get:
+      operationId: getSecurityQueue
+      tags: [campus-pick]
+      summary: Get security verification and handover queue
+      responses:
+        "200":
+          description: Security queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityQueue"
+  /handovers/{id}/verify:
+    post:
+      operationId: verifyHandover
+      tags: [campus-pick]
+      summary: Verify a one-time handover code
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HandoverInput"
+      responses:
+        "200":
+          description: Completed handover
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Handover"
+  /admin/summary:
+    get:
+      operationId: getAdminSummary
+      tags: [campus-pick]
+      summary: Get administration metrics
+      responses:
+        "200":
+          description: Admin summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSummary"
 components:
+  parameters:
+    ItemId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer }
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +316,235 @@ components:
           type: string
       required:
         - status
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+      required: [error]
+    Item:
+      type: object
+      properties:
+        id: { type: integer }
+        reportId: { type: string }
+        type: { type: string, enum: [lost, found] }
+        itemName: { type: string }
+        category: { type: string }
+        description: { type: string }
+        brand: { type: ["string", "null"] }
+        model: { type: ["string", "null"] }
+        color: { type: ["string", "null"] }
+        location: { type: string }
+        eventDate: { type: string }
+        approximateTime: { type: ["string", "null"] }
+        condition: { type: ["string", "null"] }
+        status: { type: string }
+        imageUrl: { type: ["string", "null"] }
+        identifyingFeatures: { type: ["string", "null"] }
+        storageStatus: { type: ["string", "null"] }
+        submittedBy: { type: string }
+        createdAt: { type: string }
+        isSaved: { type: boolean }
+        matchScore: { type: ["integer", "null"] }
+        matchLabel: { type: ["string", "null"] }
+      required: [id, reportId, type, itemName, category, description, location, eventDate, status, submittedBy, createdAt, isSaved]
+    ItemInput:
+      type: object
+      properties:
+        type: { type: string, enum: [lost, found] }
+        itemName: { type: string, minLength: 2 }
+        category: { type: string }
+        description: { type: string, minLength: 10 }
+        brand: { type: ["string", "null"] }
+        model: { type: ["string", "null"] }
+        color: { type: ["string", "null"] }
+        location: { type: string }
+        eventDate: { type: string }
+        approximateTime: { type: ["string", "null"] }
+        condition: { type: ["string", "null"] }
+        identifyingFeatures: { type: ["string", "null"] }
+        storageStatus: { type: ["string", "null"] }
+        imageUrl: { type: ["string", "null"] }
+      required: [type, itemName, category, description, location, eventDate]
+    ItemList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Item" }
+        total: { type: integer }
+      required: [items, total]
+    ItemDetail:
+      allOf:
+        - $ref: "#/components/schemas/Item"
+        - type: object
+          properties:
+            matches:
+              type: array
+              items: { $ref: "#/components/schemas/Match" }
+            timeline:
+              type: array
+              items: { $ref: "#/components/schemas/TimelineEvent" }
+    TimelineEvent:
+      type: object
+      properties:
+        label: { type: string }
+        status: { type: string }
+        date: { type: string }
+        completed: { type: boolean }
+      required: [label, status, date, completed]
+    Match:
+      type: object
+      properties:
+        id: { type: integer }
+        itemId: { type: integer }
+        matchedItemId: { type: integer }
+        itemName: { type: string }
+        matchedItemName: { type: string }
+        location: { type: string }
+        score: { type: integer }
+        label: { type: string }
+        reason: { type: string }
+        status: { type: string }
+      required: [id, itemId, matchedItemId, itemName, matchedItemName, location, score, label, reason, status]
+    Claim:
+      type: object
+      properties:
+        id: { type: integer }
+        itemId: { type: integer }
+        itemName: { type: string }
+        reportId: { type: string }
+        claimantName: { type: string }
+        submittedAt: { type: string }
+        status: { type: string, enum: [pending, under_verification, approved, rejected, manual_review] }
+        confidence: { type: integer }
+        handoverDate: { type: ["string", "null"] }
+        officer: { type: ["string", "null"] }
+      required: [id, itemId, itemName, reportId, claimantName, submittedAt, status, confidence]
+    ClaimInput:
+      type: object
+      properties:
+        itemId: { type: integer }
+        uniqueMarks: { type: string, minLength: 2 }
+        contents: { type: ["string", "null"] }
+        serialNumber: { type: ["string", "null"] }
+        additionalDetails: { type: string, minLength: 5 }
+      required: [itemId, uniqueMarks, additionalDetails]
+    ClaimUpdate:
+      type: object
+      properties:
+        status: { type: string, enum: [under_verification, approved, rejected, manual_review] }
+        handoverDate: { type: ["string", "null"] }
+      required: [status]
+    Notification:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        message: { type: string }
+        type: { type: string }
+        createdAt: { type: string }
+        isRead: { type: boolean }
+        href: { type: ["string", "null"] }
+      required: [id, title, message, type, createdAt, isRead]
+    Message:
+      type: object
+      properties:
+        id: { type: integer }
+        threadId: { type: string }
+        senderName: { type: string }
+        senderRole: { type: string }
+        preview: { type: string }
+        body: { type: string }
+        createdAt: { type: string }
+        unread: { type: boolean }
+        itemName: { type: ["string", "null"] }
+      required: [id, threadId, senderName, senderRole, preview, body, createdAt, unread]
+    MessageInput:
+      type: object
+      properties:
+        threadId: { type: string }
+        body: { type: string, minLength: 1 }
+      required: [threadId, body]
+    SaveState:
+      type: object
+      properties:
+        itemId: { type: integer }
+        saved: { type: boolean }
+      required: [itemId, saved]
+    Dashboard:
+      type: object
+      properties:
+        userName: { type: string }
+        role: { type: string }
+        stats:
+          type: object
+          properties:
+            myReports: { type: integer }
+            potentialMatches: { type: integer }
+            activeClaims: { type: integer }
+            returnedItems: { type: integer }
+          required: [myReports, potentialMatches, activeClaims, returnedItems]
+        recentItems:
+          type: array
+          items: { $ref: "#/components/schemas/Item" }
+        recentActivity:
+          type: array
+          items: { $ref: "#/components/schemas/Activity" }
+      required: [userName, role, stats, recentItems, recentActivity]
+    Activity:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        time: { type: string }
+        type: { type: string }
+      required: [id, title, description, time, type]
+    SecurityQueue:
+      type: object
+      properties:
+        pendingClaims:
+          type: array
+          items: { $ref: "#/components/schemas/Claim" }
+        handovers:
+          type: array
+          items: { $ref: "#/components/schemas/Handover" }
+        storedCount: { type: integer }
+      required: [pendingClaims, handovers, storedCount]
+    Handover:
+      type: object
+      properties:
+        id: { type: integer }
+        claimId: { type: integer }
+        itemName: { type: string }
+        scheduledFor: { type: string }
+        location: { type: string }
+        codeHint: { type: string }
+        status: { type: string }
+      required: [id, claimId, itemName, scheduledFor, location, codeHint, status]
+    HandoverInput:
+      type: object
+      properties:
+        code: { type: string, minLength: 4 }
+      required: [code]
+    AdminSummary:
+      type: object
+      properties:
+        totalUsers: { type: integer }
+        lostReports: { type: integer }
+        foundReports: { type: integer }
+        matchedItems: { type: integer }
+        claims: { type: integer }
+        returnedItems: { type: integer }
+        suspiciousReports: { type: integer }
+        weeklyReports:
+          type: array
+          items:
+            type: object
+            properties:
+              day: { type: string }
+              lost: { type: integer }
+              found: { type: integer }
+            required: [day, lost, found]
+      required: [totalUsers, lostReports, foundReports, matchedItems, claims, returnedItems, suspiciousReports, weeklyReports]
 
